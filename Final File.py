@@ -8,8 +8,8 @@ red = (255,0,0)
 green = (0,255,0)
 blue = (0,0,255)
 
-display_width = 800
-display_height = 600
+display_width = 1000
+display_height = 750
 gameDisplay = pygame.display.set_mode((display_width,display_height)) #sets resolution
 
 pygame.display.set_caption('Tank 19 V0.2.0') #sets title
@@ -17,11 +17,11 @@ pygame.display.set_caption('Tank 19 V0.2.0') #sets title
 clock = pygame.time.Clock() #sets clock speed
 
 
-tankImg = pygame.image.load('D:/Schools/3 Dulwich College/3 Computer Science/Pygame Project/Images/Tank.jpg')
+tankImg = pygame.image.load('Images/Tank.jpg')
 def tank(x,y):
     gameDisplay.blit(tankImg, (x,y)) #displays tank1 (gold) on the window
 
-tankImg2 = pygame.image.load('D:/Schools/3 Dulwich College/3 Computer Science/Pygame Project/Images/Tank2.jpg')
+tankImg2 = pygame.image.load('Images/Tank2.jpg')
 def tank2(x2,y2):
     gameDisplay.blit(tankImg2, (x2,y2)) #displays tank2 (silver) on the window
 
@@ -33,7 +33,7 @@ yBoundary = False
 x2Boundary = False
 y2Boundary = False #initiates the statement where a tank is on boundary or not
 
-def game_loop():
+def main_game_loop():
     x = display_width * 0.5
     y = display_height * 0.8
     x2 = display_width * 0.5
@@ -122,6 +122,6 @@ def game_loop():
         pygame.display.update() #update the window
         clock.tick(30) #sets the frame rate for the window
         
-game_loop()
+main_game_loop()
 pygame.quit()
 quit()
