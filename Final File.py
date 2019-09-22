@@ -1,127 +1,194 @@
 import pygame
 
-pygame.init() #initiates pygame
-
 black = (0,0,0)
 white = (255,255,255)
 red = (255,0,0)
 green = (0,255,0)
 blue = (0,0,255)
+brown = (110,64,64)
+yellow = (255,255,0)
+#Sets up RGB values of all the colours
 
-display_width = 1000
-display_height = 750
-gameDisplay = pygame.display.set_mode((display_width,display_height)) #sets resolution
+class Wall(pygame.sprite.Sprite):
+#Constructor function for walls
+    def __init__(self,x,y,width,height,color):
+        pygame.sprite.Sprite.__init__(self)
+        #calls the parent class (sprite) constructor
 
-pygame.display.set_caption('Tank 19 V0.2.0') #sets title
+        self.image = pygame.Surface([width, height])
+        self.image.fill(color)
+        #creates an image of the wall, and fill it with color sat.
 
-clock = pygame.time.Clock() #sets clock speed
+        self.rect = self.image.get_rect() 
+        self.rect.y = y
+        self.rect.x = x
+        #Make the top-left corner of the "tank" the passed-in location
+
+class Player(pygame.sprite.Sprite):
+
+    change_x = 0
+    change_y = 0
+    #initiates player's speed
+    
+    def __init__(self,x,y):
+    #constructor
+        pygame.sprite.Sprite.__init__(self)
+        #Call the parent's constructor
+
+        self.image = pygame.Surface([15,15]) 
+        self.image.fill(yellow)
+        #Sets height, width and colour of the tank
+
+        self.rect = self.image.get_rect()
+        self.rect.y = y
+        self.rect.x = x
+        #Make the top-left corner of the "tank" the passed-in location
+
+    def changespeed(self,x,y):
+    #Changes the speed of the player when related keys are pressed
+        self.change_x += x
+        self.change_y += y
+
+    def move(self, walls):
+    #Decides the position of the tank in the next tick
+        self.rect.x += self.change_x
+        #Moves along horizontal direction
+
+        block_hit_list = pygame.sprite.spritecollide(self,walls,False)
+        #Check if the tank is going to hit the wall in the horizontal in the next tick
+        for block in block_hit_list:
+        #If it is hitting in the horizontal direction
+            if self.change_x > 0:
+            #If the tank is going to the right
+                self.rect.right = block.rect.left
+            else:
+            #If the tank is going to the left
+                self.rect.left = block.rect.right
 
 
-tankImg = pygame.image.load('Images/Tank.jpg')
-def tank(x,y):
-    gameDisplay.blit(tankImg, (x,y)) #displays tank1 (gold) on the window
+        self.rect.y += self.change_y
+        #moves along vertical direction
 
-tankImg2 = pygame.image.load('Images/Tank2.jpg')
-def tank2(x2,y2):
-    gameDisplay.blit(tankImg2, (x2,y2)) #displays tank2 (silver) on the window
+        block_hit_list = pygame.sprite.spritecollide(self,walls,False)
+        #Check if the tank is going to hit the wall in the vertical in the next tick
+        for block in block_hit_list:
+        #If it is hitting in the vertical direction
+            if self.change_y > 0:
+            #if the tank is going to the bottom
+                self.rect.bottom = block.rect.top
+            else:
+            #If the tank is going to the top
+                self.rect.top = block.rect.bottom
 
-tank_width = 15
-tank_height = 17 #defines width and height of both tanks
+class Map():
+#Base class for all maps
 
-xBoundary = False
-yBoundary = False
-x2Boundary = False
-y2Boundary = False #initiates the statement where a tank is on boundary or not
+    wall_list = None
+    enemy_sprites = None
 
-def main_game_loop():
-    x = display_width * 0.5
-    y = display_height * 0.8
-    x2 = display_width * 0.5
-    y2 = display_height * 0.2 #sets initial position for both tanks
-    x_change = 0
-    y_change = 0
-    x2_change = 0
-    y2_change = 0 #sets initial speed for both tanks
+    def __init__(self):
+    #Constructor
+        self.wall_list = pygame.sprite.Group()
+        self.enemy_sprites = pygame.sprite.Group()
 
-    gameExit = False #initiate game loop
+class M_Classic(Map):
+#Class for map M_Classic
+    def __init__(self):
+        Map.__init__(self)
+        #Calls the constructor of its parent class
 
-    while not gameExit:
-        
+        walls = [ [0,0,10,600,brown],
+                  [0,0,800,10,brown],
+                  [790,000,10,600,brown],
+                  [0,590,800,10,brown]
+                ]
+        #This is the list of walls in map "M_Classic"
+
+        for item in walls:
+            wall = Wall(item[0],item[1],item[2],item[3],item[4])
+            self.wall_list.add(wall)
+        #Actually adds all the walls
+
+
+def main():
+#Main program
+    pygame.init()
+    #initiates pygame
+
+    display_width = 800
+    display_height = 600
+    gameDisplay = pygame.display.set_mode([display_width,display_height])
+    #Sets resolution of the game window and actually creates it
+
+    pygame.display.set_caption('TryHard MazeGame V0.3.0 (22-SEP-19)')
+    #Sets title of the game window
+
+    player = Player(390,30)
+    movingsprites = pygame.sprite.Group()
+    movingsprites.add(player)
+    #Creates the player and adds it into the sprite list
+
+    maps = []
+    #Creates a list of maps, so it will possible to play multiple maps in a single game
+
+    gamemap = M_Classic()
+    maps.append(gamemap)
+    #Puts map "M_Classic" into the map list
+
+    current_map_id = 0
+    current_map = maps[current_map_id]
+    #Makes the "current map" in use
+
+    clock = pygame.time.Clock()
+    #Sets the clock speed of the game
+
+    GameExit = False
+    
+    while not GameExit:
+    #Event processing starts here
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                gameExit = True
+                GameExit = True
+
             if event.type == pygame.KEYDOWN:
-                if xBoundary == False: #when tank1 isn't on left/right boundary
-                    if event.key == pygame.K_LEFT:
-                        x_change = -5
-                    elif event.key == pygame.K_RIGHT:
-                        x_change = 5 #sets horizontal velocity of tank1
-                if yBoundary == False: #when tank1 isn't on up/down boundary
-                    if event.key == pygame.K_UP:
-                        y_change = -5
-                    elif event.key == pygame.K_DOWN:
-                        y_change = 5 #sets vertical velocity of tank1
-                if x2Boundary == False: #when tank2 isn't on left/right boundary
-                    if event.key == pygame.K_a:
-                        x2_change = -5
-                    elif event.key == pygame.K_d:
-                        x2_change = 5 #sets horizontal velocity of tank2
-                if y2Boundary == False: #when tank2 isn't on up/down boundary
-                    if event.key == pygame.K_w:
-                        y2_change = -5
-                    elif event.key == pygame.K_s:
-                        y2_change = 5 #sets vertical velocity of tank2
+                if event.key == pygame.K_LEFT:
+                    player.changespeed(-5,0)
+                if event.key == pygame.K_RIGHT:
+                    player.changespeed(5,0)
+                if event.key == pygame.K_UP:
+                    player.changespeed(0,-5)
+                if event.key == pygame.K_DOWN:
+                    player.changespeed(0,5)
+
             if event.type == pygame.KEYUP:
-                x_change = 0
-                y_change = 0
-                x2_change = 0
-                y2_change = 0 #If no movement key is pressed, set all speeds to 0
+                if event.key == pygame.K_LEFT:
+                    player.changespeed(5,0)
+                if event.key == pygame.K_RIGHT:
+                    player.changespeed(-5,0)
+                if event.key == pygame.K_UP:
+                    player.changespeed(0,5)
+                if event.key == pygame.K_DOWN:
+                    player.changespeed(0,-5)
+        #Event processing ends here
 
-        x = x + x_change
-        y = y + y_change
-        x2 = x2 + x2_change
-        y2 = y2 + y2_change #executes all movements to be done based on velocities of both tanks
+        #Game logic starts here
 
-        gameDisplay.fill(white) #resets the window to white
-        tank(x,y)
-        tank2(x2,y2) #"draws" the two tanks at their new locations
+        #Game logic ends here
 
-        if x > (display_width - tank_width) or x < 0: #detects if tank1 is on left/right boundary
-            xBoundary = True #if it is, set the statement to True to it can't move in the next tick
-            if x < 0:
-                x = 0
-            else:
-                x = display_width - tank_width #if tank1 is on left/right boundary set it back to place (on the boundary)
-        else:
-            xBoundary = False #if tank1 isn't on left/right boundary set the statement to False (so it can move in the next tick)
-        if y > (display_height - tank_height) or y < 0: #detects if tank1 is on up/down boundary
-            yBoundary = True #if it is, set the statement to True to it can't move in the next tick
-            if y < 0:
-                y = 0
-            else:
-                y = display_height - tank_height #if tank1 is on up/down boundary set it back to place (on the boundary)
-        else:
-            yBoundary = False #if tank1 isn't on up/down boundary set the statement to False (so it can move in the next tick)
-        if x2 > (display_width - tank_width) or x2 < 0: #detects if tank2 is on left/right boundary
-            x2Boundary = True #if it is, set the statement to True to it can't move in the next tick
-            if x2 < 0:
-                x2 = 0
-            else:
-                x2 = display_width - tank_width #if tank2 is on left/right boundary set it back to place (on the boundary)
-        else:
-            x2Boundary = False #if tank2 isn't on left/right boundary set the statement to False (so it can move in the next tick)
-        if y2 > (display_height - tank_height) or y2 < 0: #detects if tank2 is on up/down boundary
-            yBoundary = True #if it is, set the statement to True to it can't move in the next tick
-            if y2 < 0:
-                y2 = 0
-            else:
-                y2 = display_height - tank_height #if tank2 is on up/down boundary set it back to place (on the boundary)
-        else:
-            y2Boundary = False #if tank2 isn't on up/down boundary set the statement to False (so it can move in the next tick)
+        gameDisplay.fill(white)
+        #Fills the entire window with white
         
-        pygame.display.update() #update the window
-        clock.tick(30) #sets the frame rate for the window
+        movingsprites.draw(gameDisplay)
+        current_map.wall_list.draw(gameDisplay)
+        #Draws all sprites and walls
         
-main_game_loop()
-pygame.quit()
-quit()
+        pygame.display.flip()
+        #Updates the game window
+        
+        clock.tick(30)
+        #Sets game frame rate to 30
+
+    pygame.quit()
+
+if __name__ == "__main__":
+    main()
