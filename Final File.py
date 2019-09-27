@@ -30,13 +30,13 @@ class Player(pygame.sprite.Sprite):
     change_y = 0
     #initiates player's speed
     
-    def __init__(self,x,y):
+    def __init__(self,x,y,colour):
     #constructor
         pygame.sprite.Sprite.__init__(self)
         #Call the parent's constructor
 
         self.image = pygame.Surface([15,15]) 
-        self.image.fill(yellow)
+        self.image.fill(colour)
         #Sets height, width and colour of the tank
 
         self.rect = self.image.get_rect()
@@ -97,10 +97,24 @@ class M_Classic(Map):
         Map.__init__(self)
         #Calls the constructor of its parent class
 
-        walls = [ [0,0,10,600,brown],
-                  [0,0,800,10,brown],
-                  [790,000,10,600,brown],
-                  [0,590,800,10,brown]
+        walls = [ [0,0,10,600,brown], #Left boundary
+                  [0,0,800,10,brown], #Top boundary
+                  [790,0,10,600,brown], #Right boundary
+                  [0,590,800,10,brown], #Bottom boundary
+                  [50,290,330,20,brown], #Mid Wall (Left)
+                  [420,290,330,20,brown], #Mid Wall (Right)
+                  [50,100,20,400,brown], #Left road Wall
+                  [730,100,20,400,brown], #Right road Wall
+                  [360,200,20,200,brown], #Mid road Wall (Left)
+                  [420,200,20,200,brown], #Mid road Wall (Right)
+                  [670,350,20,250,brown], #BR corner walkway Wall
+                  [670,0,20,250,brown], #TR corner Walkway Wall
+                  [110,350,20,250,brown], #BL corner walkway Wall
+                  [110,0,20,250,brown], #TL corner walkway Wall
+                  [200,45,400,20,brown], #Top Wall 1
+                  [200,100,400,20,brown], #Top Wall 2
+                  [200,480,400,20,brown], #Bottom Wall 1
+                  [200,535,400,20,brown] #Bottom Wall 2
                 ]
         #This is the list of walls in map "M_Classic"
 
@@ -120,13 +134,15 @@ def main():
     gameDisplay = pygame.display.set_mode([display_width,display_height])
     #Sets resolution of the game window and actually creates it
 
-    pygame.display.set_caption('TryHard MazeGame V0.3.0 (22-SEP-19)')
+    pygame.display.set_caption('TryHard MazeGame V0.2 (27-SEP-19)')
     #Sets title of the game window
 
-    player = Player(390,30)
+    player = Player(392,30,green)
+    opponent = Player(392,570,red)
     movingsprites = pygame.sprite.Group()
     movingsprites.add(player)
-    #Creates the player and adds it into the sprite list
+    movingsprites.add(opponent)
+    #Creates the player and the AI, adds them into the sprite list
 
     maps = []
     #Creates a list of maps, so it will possible to play multiple maps in a single game
@@ -149,26 +165,46 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 GameExit = True
+            #Quit the game if the user chose to do so.
 
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_LEFT:
-                    player.changespeed(-5,0)
+                    player.changespeed(-6,0)
                 if event.key == pygame.K_RIGHT:
-                    player.changespeed(5,0)
+                    player.changespeed(6,0)
                 if event.key == pygame.K_UP:
-                    player.changespeed(0,-5)
+                    player.changespeed(0,-6)
                 if event.key == pygame.K_DOWN:
-                    player.changespeed(0,5)
+                    player.changespeed(0,6)
+                #When a direction key is pressed let the player to do according movements
+                if event.key == pygame.K_a:
+                    opponent.changespeed(-6,0)
+                if event.key == pygame.K_d:
+                    opponent.changespeed(6,0)
+                if event.key == pygame.K_w:
+                    opponent.changespeed(0,-6)
+                if event.key == pygame.K_s:
+                    opponent.changespeed(0,6)
+                #When W/A/S/D is presses let the opponent to do according movements
 
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_LEFT:
-                    player.changespeed(5,0)
+                    player.changespeed(6,0)
                 if event.key == pygame.K_RIGHT:
-                    player.changespeed(-5,0)
+                    player.changespeed(-6,0)
                 if event.key == pygame.K_UP:
-                    player.changespeed(0,5)
+                    player.changespeed(0,6)
                 if event.key == pygame.K_DOWN:
-                    player.changespeed(0,-5)
+                    player.changespeed(0,-6)
+                #When a direction key is released reset the player's speed
+                if event.key == pygame.K_a:
+                    opponent.changespeed(6,0)
+                if event.key == pygame.K_d:
+                    opponent.changespeed(-6,0)
+                if event.key == pygame.K_w:
+                    opponent.changespeed(0,6)
+                if event.key == pygame.K_s:
+                    opponent.changespeed(0,-6)
         #Event processing ends here
 
         #Game logic starts here
@@ -181,6 +217,10 @@ def main():
         movingsprites.draw(gameDisplay)
         current_map.wall_list.draw(gameDisplay)
         #Draws all sprites and walls
+
+        player.move(current_map.wall_list)
+        opponent.move(current_map.wall_list)
+        #Updates the position of player in each tick
         
         pygame.display.flip()
         #Updates the game window
@@ -189,6 +229,8 @@ def main():
         #Sets game frame rate to 30
 
     pygame.quit()
+    #Quit the game when the game is no longer inside the main loop
 
 if __name__ == "__main__":
     main()
+#Calls main loop at the start of the game
