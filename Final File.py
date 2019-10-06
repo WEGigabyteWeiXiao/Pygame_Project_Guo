@@ -1,5 +1,18 @@
 import pygame
 
+pygame.init()
+
+display_width = 800
+display_height = 700
+gameDisplay = pygame.display.set_mode([display_width,display_height])
+#Sets resolution of the game window and actually creates it
+
+pygame.display.set_caption('Tank 19 V0.5 (06-OCT-19)')
+#Sets title of the game window
+
+clock = pygame.time.Clock()
+#Sets the clock speed of the game
+
 black = (0,0,0)
 white = (255,255,255)
 red = (255,0,0)
@@ -28,7 +41,8 @@ class Player(pygame.sprite.Sprite):
 
     change_x = 0
     change_y = 0
-    #initiates player's speed
+    hp = 100
+    #initiates player's speed and hitpoint
     
     def __init__(self,x,y,colour):
     #constructor
@@ -45,9 +59,9 @@ class Player(pygame.sprite.Sprite):
         #Make the top-left corner of the "tank" the passed-in location
 
     def changespeed(self,x,y):
-    #Changes the speed of the player when related keys are pressed
         self.change_x += x
         self.change_y += y
+        #Changes the speed of the player when related keys are pressed
 
     def move(self, walls):
     #Decides the position of the tank in the next tick
@@ -85,11 +99,13 @@ class Map():
 
     wall_list = None
     enemy_sprites = None
+    #Initialises wall list and stuffs
 
     def __init__(self):
     #Constructor
         self.wall_list = pygame.sprite.Group()
         self.enemy_sprites = pygame.sprite.Group()
+        #Makes both wall_list and enemy_sprites groups
 
 class M_Classic(Map):
 #Class for map M_Classic
@@ -100,11 +116,11 @@ class M_Classic(Map):
         walls = [ [0,0,10,600,brown], #Left boundary
                   [0,0,800,10,brown], #Top boundary
                   [790,0,10,600,brown], #Right boundary
-                  [0,590,800,10,brown], #Bottom boundary
+                  [0,590,800,20,brown], #Bottom boundary
                   [50,290,330,20,brown], #Mid Wall (Left)
                   [420,290,330,20,brown], #Mid Wall (Right)
-                  [50,100,20,400,brown], #Left road Wall
-                  [730,100,20,400,brown], #Right road Wall
+                  [50,50,20,500,brown], #Left road Wall
+                  [730,50,20,500,brown], #Right road Wall
                   [360,200,20,200,brown], #Mid road Wall (Left)
                   [420,200,20,200,brown], #Mid road Wall (Right)
                   [670,350,20,250,brown], #BR corner walkway Wall
@@ -123,25 +139,69 @@ class M_Classic(Map):
             self.wall_list.add(wall)
         #Actually adds all the walls
 
+def start_menu():
+    intro = True
+    #Sets the initial value of iteration condition
+
+    while intro == True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                quit()
+                #If the window is closed, actually close it
+                
+            if event.type == pygame.KEYDOWN:
+            #Detects if the user pressed a button
+                if event.key == pygame.K_c:
+                    main()
+                #If [C] is pressed let the game enter the main loop
+                    
+                if event.key == pygame.K_v:
+                    pygame.quit()
+                    quit()
+                #If [V] is pressed quit the game
+
+        gameDisplay.fill(white)
+        #fill the screen with white
+        
+        canteur115 = pygame.font.Font("Fonts/CENTAUR.TTF", 115)
+        canteur25 = pygame.font.Font("Fonts/CENTAUR.TTF", 25)
+        #Initialise fonts used in the subroutine
+        
+        TextSurf, TextRect = text_objects("Tank 19", canteur115)
+        TextRect.center = (400,250)
+        #Displays title of game
+        
+        TextSurf2, TextRect2 = text_objects("Game Version: V0.5 Updated 06-Oct-19", canteur25)
+        TextRect2.center = (400,300)
+        #Displays version number of game
+        
+        TextSurf3, TextRect3 = text_objects("Press [C] to start the game", canteur25)
+        TextRect3.center = (227,500)
+        TextSurf4, TextRect4 = text_objects("Press [V] to quit the game (or simply press the 'X' in the corner)",canteur25)
+        TextRect4.center = (400,530)
+        #Displays instructions on the window
+        
+        gameDisplay.blit(TextSurf, TextRect)
+        gameDisplay.blit(TextSurf2, TextRect2)
+        gameDisplay.blit(TextSurf3, TextRect3)
+        gameDisplay.blit(TextSurf4, TextRect4)
+        pygame.display.update()
+        #Makes all changes made above to take effect
+
+def text_objects(text, font):
+    textSurface = font.render(text, True, black)
+    return textSurface, textSurface.get_rect()
+#Function for setting massage display
 
 def main():
 #Main program
-    pygame.init()
-    #initiates pygame
 
-    display_width = 800
-    display_height = 600
-    gameDisplay = pygame.display.set_mode([display_width,display_height])
-    #Sets resolution of the game window and actually creates it
-
-    pygame.display.set_caption('TryHard MazeGame V0.2 (27-SEP-19)')
-    #Sets title of the game window
-
-    player = Player(392,30,green)
-    opponent = Player(392,570,red)
+    player1 = Player(342,20,green)
+    player2 = Player(442,20,red)
     movingsprites = pygame.sprite.Group()
-    movingsprites.add(player)
-    movingsprites.add(opponent)
+    movingsprites.add(player1)
+    movingsprites.add(player2)
     #Creates the player and the AI, adds them into the sprite list
 
     maps = []
@@ -169,60 +229,80 @@ def main():
 
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_LEFT:
-                    player.changespeed(-6,0)
+                    player1.changespeed(-6,0)
                 if event.key == pygame.K_RIGHT:
-                    player.changespeed(6,0)
+                    player1.changespeed(6,0)
                 if event.key == pygame.K_UP:
-                    player.changespeed(0,-6)
+                    player1.changespeed(0,-6)
                 if event.key == pygame.K_DOWN:
-                    player.changespeed(0,6)
+                    player1.changespeed(0,6)
                 #When a direction key is pressed let the player to do according movements
                 if event.key == pygame.K_a:
-                    opponent.changespeed(-6,0)
+                    player2.changespeed(-6,0)
                 if event.key == pygame.K_d:
-                    opponent.changespeed(6,0)
+                    player2.changespeed(6,0)
                 if event.key == pygame.K_w:
-                    opponent.changespeed(0,-6)
+                    player2.changespeed(0,-6)
                 if event.key == pygame.K_s:
-                    opponent.changespeed(0,6)
-                #When W/A/S/D is presses let the opponent to do according movements
+                    player2.changespeed(0,6)
+                #When W/A/S/D is presses let the other player to do according movements
+
+                if event.key == pygame.K_m:
+                    start_menu()
+                #When M is pressed go back to main game menu
+
+                if event.key == pygame.K_v:
+                    pygame.quit()
+                    quit()
+                #When V is pressed quit the game
 
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_LEFT:
-                    player.changespeed(6,0)
+                    player1.changespeed(6,0)
                 if event.key == pygame.K_RIGHT:
-                    player.changespeed(-6,0)
+                    player1.changespeed(-6,0)
                 if event.key == pygame.K_UP:
-                    player.changespeed(0,6)
+                    player1.changespeed(0,6)
                 if event.key == pygame.K_DOWN:
-                    player.changespeed(0,-6)
+                    player1.changespeed(0,-6)
                 #When a direction key is released reset the player's speed
                 if event.key == pygame.K_a:
-                    opponent.changespeed(6,0)
+                    player2.changespeed(6,0)
                 if event.key == pygame.K_d:
-                    opponent.changespeed(-6,0)
+                    player2.changespeed(-6,0)
                 if event.key == pygame.K_w:
-                    opponent.changespeed(0,6)
+                    player2.changespeed(0,6)
                 if event.key == pygame.K_s:
-                    opponent.changespeed(0,-6)
+                    player2.changespeed(0,-6)
+                #When W/A/S/D is released let reset the other player's speed
         #Event processing ends here
 
         #Game logic starts here
 
         #Game logic ends here
 
+        #Additional drawing starts here
+        canteur20 = pygame.font.Font("Fonts/CENTAUR.TTF", 20)
+        #Defines fonts used in main game loop
+
         gameDisplay.fill(white)
-        #Fills the entire window with white
+        #Fills the entire window with white to initialise
+        
+        TextSurf5, TextRect5 = text_objects("Press [M] to go to game menu    Press [V] to quit the game", canteur20)
+        TextRect5.center = (220,680)
+        gameDisplay.blit(TextSurf5, TextRect5)
+
+        #Additional drawing stops here
         
         movingsprites.draw(gameDisplay)
         current_map.wall_list.draw(gameDisplay)
         #Draws all sprites and walls
 
-        player.move(current_map.wall_list)
-        opponent.move(current_map.wall_list)
+        player1.move(current_map.wall_list)
+        player2.move(current_map.wall_list)
         #Updates the position of player in each tick
         
-        pygame.display.flip()
+        pygame.display.update()
         #Updates the game window
         
         clock.tick(30)
@@ -232,5 +312,5 @@ def main():
     #Quit the game when the game is no longer inside the main loop
 
 if __name__ == "__main__":
-    main()
-#Calls main loop at the start of the game
+    start_menu()
+#Calls main menu at the start of the game
