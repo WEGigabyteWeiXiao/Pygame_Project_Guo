@@ -7,7 +7,7 @@ display_height = 700
 gameDisplay = pygame.display.set_mode([display_width,display_height])
 #Sets resolution of the game window and actually creates it
 
-pygame.display.set_caption('Tank 19 V0.6 (07-OCT-19)')
+pygame.display.set_caption('Tank 19 V1.0 (07-NOV-19)')
 #Sets title of the game window
 
 clock = pygame.time.Clock()
@@ -20,7 +20,12 @@ green = (0,255,0)
 blue = (0,0,255)
 brown = (110,64,64)
 yellow = (255,255,0)
+dyellow = (150,150,0)
 #Sets up RGB values of all the colours
+
+bullet_list = pygame.sprite.Group()
+#Creates a list for bullets
+
 
 class Wall(pygame.sprite.Sprite):
 #Constructor function for walls
@@ -42,9 +47,17 @@ class Player(pygame.sprite.Sprite):
 
     change_x = 0
     change_y = 0
-    #initiates player's speed and hitpoint
+    #initialises player's speed and hitpoint
+
+    hp = 500
+    max_hp = 500
+    mp = 2000
+    #Initialises player's hp and mp
+
+    recoveryCount = 4
+    #Initialises player's hp recovery counter
     
-    def __init__(self,x,y,colour,hp):
+    def __init__(self,x,y,colour):
     #constructor
         pygame.sprite.Sprite.__init__(self)
         #Call the parent's constructor
@@ -58,9 +71,6 @@ class Player(pygame.sprite.Sprite):
         self.rect.x = x
         #Make the top-left corner of the "tank" the passed-in location
 
-        self.hp = hp
-        #Initialises the hp of the player
-
     def changespeed(self,x,y):
         self.change_x += x
         self.change_y += y
@@ -69,7 +79,7 @@ class Player(pygame.sprite.Sprite):
     def move(self, walls):
     #Decides the position of the tank in the next tick
         self.rect.x += self.change_x
-        #Moves along horizontal direction
+        #Moves walong horizontal direction
 
         block_hit_list = pygame.sprite.spritecollide(self,walls,False)
         #Check if the tank is going to hit the wall in the horizontal in the next tick
@@ -96,6 +106,40 @@ class Player(pygame.sprite.Sprite):
             #If the tank is going to the top
                 self.rect.top = block.rect.bottom
 
+        block_hit_list = pygame.sprite.spritecollide(self,bullet_list,False)
+        #Check if the player is being hit by a a bullet
+        for block in block_hit_list:
+        #If a bullet did hit a player
+            self.hp = self.hp - 50
+        
+    def shoot(self):
+        bullet_x = self.rect.x
+        bullet_y = self.rect.y
+        bullet = Bullet(bullet_x + self.change_x + 5, bullet_y + self.change_y + 5)
+        #Creates a bullet when the player presses space
+        bullet.speed_x = self.change_x * 3
+        bullet.speed_y = self.change_y * 3
+        #Set the initial position of the bullet
+        bullet_list.add(bullet)
+        self.mp = self.mp - 60
+        #Adds the bullet into the game and deducts mp required from the player
+
+    def get_change_x(self):
+    #Getter method for horizontal speed
+        return self.change_x
+
+    def get_change_y(self):
+    #Getter method for vertical speed
+        return self.change_y
+
+    def get_pos_x(self):
+    #Getter method for horizontal position
+        return self.rect.x
+
+    def get_pos_y(self):
+    #Getter method for vertical position
+        return self.rect.y
+
     def hp_change(self, hpchange):
     #Changes the hp of the player in case of a hit or something else
         self.hp = self.hp + hpchange
@@ -103,10 +147,77 @@ class Player(pygame.sprite.Sprite):
         hpchange = 0
         #Reset the value so the value will not be changed constantly
 
+    def mp_update(self):
+    #Changes the mp of the player in case of a shoot and natural recovery
+        if self.mp < 1000:
+            self.mp = self.mp + 1
+            if self.mp < 400:
+                self.mp = self.mp + 1
+                if self.mp < 160:
+                    self.mp = self.mp + 1
+        #If mp os less than 1000/400/160, recover mp at regular/double/triple speed
+        if self.mp > 1000:
+            self.mp = self.mp - 1
+        #If mp is higher than maximum, slowly deduct it
+
+    def hp_recovery(self):
+        if self.recoveryCount > 0:
+            self.recoveryCount = self.recoveryCount - 1
+        #When it isn't the tick for recovery yet, decrease the counter
+        else:
+        #When it is the tick for hp recovery
+            self.recoveryCount = 6
+            #Resets the counter
+            if self.hp < self.max_hp * 0.15:
+                self.hp = self.hp + 2
+            elif self.hp < self.max_hp:
+                self.hp = self.hp + 1
+            #Recover hp, if lower than 15% of max hp, double the speed
+        if self.mp >= 1000:
+            self.recoveryCount = self.recoveryCount - 1
+        #If the player is at full mp, double the speed of recovery
+                        
+
     def get_hp(self):
     #Getter method for hp (in order to display on the scoreboard)
         return self.hp
-        
+
+    def get_mp(self):
+    #Getter method for mp
+        return self.mp
+
+    def get_max_hp(self):
+    #Getter method for max_hp
+        return self.max_hp
+
+
+class Bullet(pygame.sprite.Sprite):
+#Base class for bullets in the game
+    
+    def __init__(self, x, y):
+    #Constructor for the class
+        pygame.sprite.Sprite.__init__(self)
+        #Calls the constructor of its parent class
+
+        self.image = pygame.Surface([5,5])
+        self.image.fill(black)
+        #Creates a bullet with size 5,5 and fill it with black
+
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+        #Sets the bullet as a rectangle
+
+        self.speed_x = 0
+        self.speed_y = 0
+        #Sets speed of bullets
+
+    def move(self):
+        self.rect.x += self.speed_x
+        self.rect.y += self.speed_y
+        #Moves bullets
+
+
 
 class Map():
 #Base class for all maps
@@ -176,12 +287,16 @@ def start_menu():
             #Detects if the user pressed a button
                 if event.key == pygame.K_c:
                     intro = False
-                #If [C] is pressed let the game enter the main loop
+                #If [C] is pressed let the game enter tutorial
                     
                 if event.key == pygame.K_v:
                     pygame.quit()
                     quit()
                 #If [V] is pressed quit the game
+
+                if event.key == pygame.K_h:
+                    tutorial()
+                #If [H] is pressed enter tutorial
 
         gameDisplay.fill(white)
         #fill the screen with white
@@ -194,7 +309,7 @@ def start_menu():
         TextRect.center = (400,250)
         #Displays title of game
         
-        TextSurf2, TextRect2 = text_objects("Game Version: V0.6 Updated 07-Oct-19", canteur25)
+        TextSurf2, TextRect2 = text_objects("Game Version: V1.0 Updated 07-Nov-19", canteur25)
         TextRect2.center = (400,300)
         #Displays version number of game
         
@@ -210,14 +325,113 @@ def start_menu():
         gameDisplay.blit(TextSurf4, TextRect4)
         pygame.display.update()
         #Makes all changes made above to take effect
+
+
+def tutorial():
+    tutorial = True
+    
+    while tutorial == True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                quit()
+            #If the window is closed, close it
+            if event.type == pygame.KEYDOWN:
+            #Detects if the user pressed a button
+                if event.key == pygame.K_c:
+                    tutorial = False
+                if event.key == pygame.K_m:
+                    start_menu()
+                if event.key == pygame.K_v:
+                    pygame.quit()
+                    quit()
+        gameDisplay.fill(white)
         
+        canteur60 = pygame.font.Font("Fonts/CENTAUR.TTF", 60)
+        canteur25 = pygame.font.Font("Fonts/CENTAUR.TTF", 25)
+        #Define all fonts used in this subroutine
+
+        TextSurf100, TextRect100 = text_objects("Tank 19 Tutorial", canteur60)
+        TextRect100.center = (400,150)
+        #Displays title
+
+        TextSurf101, TextRect101 = text_objects("Movement keys: P1:[W][A][S][D]; P2:[I][J][K][L].", canteur25)
+        TextRect101.center = (400,300)
+        TextSurf102, TextRect102 = text_objects("Shooting keys: P1:[C]; P2:[N]. Each player start with 500 maximum HP", canteur25)
+        TextRect102.center = (400,350)
+        TextSurf103, TextRect103 = text_objects("and 2000 MP. Each player has a maximum MP of 1000. Your MP will recover",canteur25)
+        TextRect103.center = (400,375)
+        TextSurf104, TextRect104 = text_objects("at a rate of 30 per second. However, when it is lower than 400/160, the rate", canteur25)
+        TextRect104.center = (400,400)
+        TextSurf105, TextRect105 = text_objects("of recovery will be doubled/tripled, and it will decrease when higher than maximum.", canteur25)
+        TextRect105.center = (400,425)
+        TextSurf106, TextRect106 = text_objects("The recovery is boosted by 5 times within 4 seconds of dealing any damage to your", canteur25)
+        TextRect106.center = (400,450)
+        TextSurf107, TextRect107 = text_objects("opponent. Your HP will recover at a rate of 2 per second, or 4 when it", canteur25)
+        TextRect107.center = (400,475)
+        TextSurf108, TextRect108 = text_objects("is lower than 15% your maximum. Your initial damage is 50 and can be improved.", canteur25)
+        TextRect108.center = (400,500)
+        TextSurf109, TextRect109 = text_objects("There will also be some boosters in the map, which provides buffs to players.", canteur25)
+        TextRect109.center = (350,525)
+        TextSurf110, TextRect110 = text_objects("Press [C] to start game, press [M] for main menu, press [V] to quit", canteur25)
+        TextRect110.center = (400,625)
+        #Creates all the tutorial texts
+        
+        gameDisplay.blit(TextSurf100, TextRect100)
+        gameDisplay.blit(TextSurf101, TextRect101)
+        gameDisplay.blit(TextSurf102, TextRect102)
+        gameDisplay.blit(TextSurf103, TextRect103)
+        gameDisplay.blit(TextSurf104, TextRect104)
+        gameDisplay.blit(TextSurf105, TextRect105)
+        gameDisplay.blit(TextSurf106, TextRect106)
+        gameDisplay.blit(TextSurf107, TextRect107)
+        gameDisplay.blit(TextSurf108, TextRect108)
+        gameDisplay.blit(TextSurf109, TextRect109)
+        gameDisplay.blit(TextSurf110, TextRect110)
+        #Make all the texts on the screen
+        
+        pygame.display.update()
+        #Makes all changes to take effect
+
+
+def game_over(winner):
+#Screen for game over
+    canteur60 = pygame.font.Font("Fonts/CENTAUR.TTF", 60)
+    canteur20 = pygame.font.Font("Fonts/CENTAUR.TTF", 25)
+    #Defines fonts used in game over screen
+    
+    gameDisplay.fill(white)
+    if winner == 1:
+        TextSurf201, TextRect201 = text_objects("Player 1 has won the game!", canteur60)
+    if winner == 2:
+        TextSurf201, TextRect201 = text_objects("Player 2 has won the game!", canteur60)
+    TextRect201.center = (400,350)
+    #Display results based on the outcome
+    TextSurf202, TextRect202 = text_objects("Press [X] to quit the game", canteur20)
+    TextRect202.center = (200,600)
+    gameDisplay.blit(TextSurf201, TextRect201)
+    gameDisplay.blit(TextSurf202, TextRect202)
+    #Display and make all other texts on this screen
+
+    for event in pygame.event.get():
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_x:
+                pygame.quit()
+                quit()
+            #If [X] is pressed, quit the game
+
+    pygame.display.update()
+    #Update the screen to let it take effect
+    
+
 
 def main():
 #Main program
-
-    player1 = Player(392,20,green,100)
     movingsprites = pygame.sprite.Group()
+    player1 = Player(392,20,red)
     movingsprites.add(player1)
+    player2 = Player(392,570,dyellow)
+    movingsprites.add(player2)
     #Creates the player (and the AI), adds them into the sprite list
 
     maps = []
@@ -245,14 +459,24 @@ def main():
 
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_a:
-                    player1.changespeed(-6,0)
+                    player1.changespeed(-5,0)
                 if event.key == pygame.K_d:
-                    player1.changespeed(6,0)
+                    player1.changespeed(5,0)
                 if event.key == pygame.K_w:
-                    player1.changespeed(0,-6)
+                    player1.changespeed(0,-5)
                 if event.key == pygame.K_s:
-                    player1.changespeed(0,6)
-                #When a direction key is pressed let the player to do according movements
+                    player1.changespeed(0,5)
+                #When a direction key is pressed let player1 to do according movements
+
+                if event.key == pygame.K_j:
+                    player2.changespeed(-5,0)
+                if event.key == pygame.K_l:
+                    player2.changespeed(5,0)
+                if event.key == pygame.K_i:
+                    player2.changespeed(0,-5)
+                if event.key == pygame.K_k:
+                    player2.changespeed(0,5)
+                #When a direction key is pressed let player2 to do according movements
 
                 if event.key == pygame.K_m:
                     start_menu()
@@ -263,16 +487,49 @@ def main():
                     quit()
                 #When V is pressed quit the game
 
+                if event.key == pygame.K_h:
+                    tutorial()
+                #When H is pressed go to tutorial
+
+                if event.key == pygame.K_c:
+                    if (player1.get_change_x() != 0) or (player1.get_change_y() != 0):
+                        if player1.get_mp() >= 60:
+                            player1.shoot()
+                #If shooting key for player1 is pressed and player1 meets all requirements to shoot
+
+                if event.key == pygame.K_n:
+                    if (player2.get_change_x() != 0) or (player2.get_change_y() != 0):
+                        if player2.get_mp() >= 60:
+                            player2.shoot()
+                #If shooting key for player2 is pressed and player2 meets all requirements to shoot
+
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_a:
-                    player1.changespeed(6,0)
+                    player1.changespeed(5,0)
                 if event.key == pygame.K_d:
-                    player1.changespeed(-6,0)
+                    player1.changespeed(-5,0)
                 if event.key == pygame.K_w:
-                    player1.changespeed(0,6)
+                    player1.changespeed(0,5)
                 if event.key == pygame.K_s:
-                    player1.changespeed(0,-6)
-                #When a direction key is released reset the player's speed
+                    player1.changespeed(0,-5)
+                #When a direction key is released reset player1's speed
+
+                if event.key == pygame.K_j:
+                    player2.changespeed(5,0)
+                if event.key == pygame.K_l:
+                    player2.changespeed(-5,0)
+                if event.key == pygame.K_i:
+                    player2.changespeed(0,5)
+                if event.key == pygame.K_k:
+                    player2.changespeed(0,-5)
+                #When a direction key is released reset player2's speed
+
+        for bullet in bullet_list:
+            if bullet.rect.x > -50 and bullet.rect.x < 900:
+                if bullet.rect.y > -150 and bullet.rect.y < 800:
+            #Only moves the bullet when it is on the screen
+                    bullet.move()
+        #Updates positions of all bullets on the screen
 
         #Event processing ends here
 
@@ -282,27 +539,66 @@ def main():
         #Fills the entire window with white to initialise
 
         movingsprites.draw(gameDisplay)
+        bullet_list.draw(gameDisplay)
         current_map.wall_list.draw(gameDisplay)
         #Draws all sprites and walls
 
         canteur20 = pygame.font.Font("Fonts/CENTAUR.TTF", 20)
         #Defines fonts used in main game loop
 
-        TextSurf5, TextRect5 = text_objects("Press [M] to go to game menu    Press [V] to quit the game", canteur20)
+        TextSurf5, TextRect5 = text_objects("Press [M] to go to game menu    Press [V] to quit the game    Press [H] for tutorial", canteur20)
         TextRect5.center = (220,680)
         gameDisplay.blit(TextSurf5, TextRect5)
         #Displays text for going back to main menu or quit the game
 
-        TextSurf6, TextRect6 = text_objects("Player1 HP:" + str(player1.get_hp()), canteur20)
-        TextRect6.center = (65,625)
+        TextSurf6, TextRect6 = text_objects("Player1 HP:" + str(player1.get_hp()) + "/" + str(player1.get_max_hp()), canteur20)
+        TextRect6.center = (85,625)
         gameDisplay.blit(TextSurf6, TextRect6)
-        #Displays information of the hp remaining hp of the player
+        #Displays information of the hp remaining of player1
+
+        TextSurf7, TextRect7 = text_objects("Player1 MP:" + str(player1.get_mp()) + "/1000", canteur20)
+        TextRect7.center = (90,650)
+        gameDisplay.blit(TextSurf7, TextRect7)
+        #Displays information of the mp remaining of player2
+
+        TextSurf8, TextRect8 = text_objects("Player2 HP:" + str(player2.get_hp()) + "/" + str(player2.get_max_hp()), canteur20)
+        TextRect8.center = (715,625)
+        gameDisplay.blit(TextSurf8, TextRect8)
+        #Displays information of the hp remaining of player2
+
+        TextSurf9, TextRect9 = text_objects("Player2 MP:" + str(player2.get_mp()) + "/1000", canteur20)
+        TextRect9.center = (705,650)
+        gameDisplay.blit(TextSurf9, TextRect9)
+        #Displays information of the mp remaining of player2
 
         #Additional drawing stops here
 
         player1.move(current_map.wall_list)
-        #Updates the position of player in each tick
-        
+        #Updates the position of player1 in each tick
+
+        player2.move(current_map.wall_list)
+        #Updates the position of player2 in each tick
+
+        player1.mp_update()
+        #Updates the mp of player1 in each tick
+
+        player2.mp_update()
+        #Updates the mp of player2 in each tick
+
+        player1.hp_recovery()
+        #Updates the hp of player1
+
+        player2.hp_recovery()
+        #Uodates the hp of player2
+
+        if player1.get_hp() < 0:
+            game_over(2)
+            player1.hp_change(-10000)
+        if player2.get_hp() < 0:
+            game_over(1)
+            player2.hp_change(-10000)
+        #If any player died, terminate the game
+
         pygame.display.update()
         #Updates the game window
         
@@ -314,5 +610,6 @@ def main():
 
 if __name__ == "__main__":
     start_menu()
+    tutorial()
     main()
 #Calls main menu at the start of the game
