@@ -7,7 +7,7 @@ display_height = 700
 gameDisplay = pygame.display.set_mode([display_width,display_height])
 #Sets resolution of the game window and actually creates it
 
-pygame.display.set_caption('Tank 19 V1.0 (07-NOV-19)')
+pygame.display.set_caption('Tank 19 V1.1 (08-NOV-19)')
 #Sets title of the game window
 
 clock = pygame.time.Clock()
@@ -106,7 +106,7 @@ class Player(pygame.sprite.Sprite):
             #If the tank is going to the top
                 self.rect.top = block.rect.bottom
 
-        block_hit_list = pygame.sprite.spritecollide(self,bullet_list,False)
+        block_hit_list = pygame.sprite.spritecollide(self,bullet_list,True)
         #Check if the player is being hit by a a bullet
         for block in block_hit_list:
         #If a bullet did hit a player
@@ -190,6 +190,11 @@ class Player(pygame.sprite.Sprite):
     #Getter method for max_hp
         return self.max_hp
 
+    def set_pos(self,newx,newy):
+    #Subroutine for setting position of player
+        self.x = newx
+        self.y = newy
+
 
 class Bullet(pygame.sprite.Sprite):
 #Base class for bullets in the game
@@ -214,9 +219,10 @@ class Bullet(pygame.sprite.Sprite):
 
     def move(self):
         self.rect.x += self.speed_x
+        #Moves bullets along horizontal direction
+        
         self.rect.y += self.speed_y
-        #Moves bullets
-
+        #Moves bullets along vertical direction
 
 
 class Map():
@@ -270,7 +276,7 @@ def text_objects(text, font):
     textSurface = font.render(text, True, black)
     return textSurface, textSurface.get_rect()
 #Function for setting massage display
-
+    
 
 def start_menu():
     intro = True
@@ -285,18 +291,18 @@ def start_menu():
                 
             if event.type == pygame.KEYDOWN:
             #Detects if the user pressed a button
-                if event.key == pygame.K_c:
+                if event.key == pygame.K_1:
                     intro = False
-                #If [C] is pressed let the game enter tutorial
+                #If [1] is pressed let the game enter tutorial
                     
-                if event.key == pygame.K_v:
+                if event.key == pygame.K_2:
                     pygame.quit()
                     quit()
-                #If [V] is pressed quit the game
+                #If [2] is pressed quit the game
 
-                if event.key == pygame.K_h:
+                if event.key == pygame.K_3:
                     tutorial()
-                #If [H] is pressed enter tutorial
+                #If [3] is pressed go to tutorial
 
         gameDisplay.fill(white)
         #fill the screen with white
@@ -309,20 +315,23 @@ def start_menu():
         TextRect.center = (400,250)
         #Displays title of game
         
-        TextSurf2, TextRect2 = text_objects("Game Version: V1.0 Updated 07-Nov-19", canteur25)
+        TextSurf2, TextRect2 = text_objects("Game Version: V1.1 Updated 08-Nov-19", canteur25)
         TextRect2.center = (400,300)
         #Displays version number of game
         
-        TextSurf3, TextRect3 = text_objects("Press [C] to start the game", canteur25)
+        TextSurf3, TextRect3 = text_objects("Press [1] to start the game", canteur25)
         TextRect3.center = (227,500)
-        TextSurf4, TextRect4 = text_objects("Press [V] to quit the game (or simply press the 'X' in the corner)",canteur25)
+        TextSurf4, TextRect4 = text_objects("Press [2] to quit the game (or simply press the 'X' in the corner)",canteur25)
         TextRect4.center = (400,530)
+        TextSurf201, TextRect201 = text_objects("Press [3] for tutorial", canteur25)
+        TextRect201.center = (200,560)
         #Displays instructions on the window
         
         gameDisplay.blit(TextSurf, TextRect)
         gameDisplay.blit(TextSurf2, TextRect2)
         gameDisplay.blit(TextSurf3, TextRect3)
         gameDisplay.blit(TextSurf4, TextRect4)
+        gameDisplay.blit(TextSurf201, TextRect201)
         pygame.display.update()
         #Makes all changes made above to take effect
 
@@ -338,11 +347,11 @@ def tutorial():
             #If the window is closed, close it
             if event.type == pygame.KEYDOWN:
             #Detects if the user pressed a button
-                if event.key == pygame.K_c:
+                if event.key == pygame.K_1:
                     tutorial = False
-                if event.key == pygame.K_m:
+                if event.key == pygame.K_2:
                     start_menu()
-                if event.key == pygame.K_v:
+                if event.key == pygame.K_3:
                     pygame.quit()
                     quit()
         gameDisplay.fill(white)
@@ -371,10 +380,10 @@ def tutorial():
         TextRect107.center = (400,475)
         TextSurf108, TextRect108 = text_objects("is lower than 15% your maximum. Your initial damage is 50 and can be improved.", canteur25)
         TextRect108.center = (400,500)
-        TextSurf109, TextRect109 = text_objects("There will also be some boosters in the map, which provides buffs to players.", canteur25)
+        TextSurf109, TextRect109 = text_objects("There will also be some boosters in the map, which provides buffs to players.(Future Function)", canteur25)
         TextRect109.center = (350,525)
-        TextSurf110, TextRect110 = text_objects("Press [C] to start game, press [M] for main menu, press [V] to quit", canteur25)
-        TextRect110.center = (400,625)
+        TextSurf110, TextRect110 = text_objects("Press [1] to start game, press [2] for main menu, press [3] to quit", canteur25)
+        TextRect110.center = (420,625)
         #Creates all the tutorial texts
         
         gameDisplay.blit(TextSurf100, TextRect100)
@@ -407,18 +416,21 @@ def game_over(winner):
         TextSurf201, TextRect201 = text_objects("Player 2 has won the game!", canteur60)
     TextRect201.center = (400,350)
     #Display results based on the outcome
-    TextSurf202, TextRect202 = text_objects("Press [X] to quit the game", canteur20)
-    TextRect202.center = (200,600)
+    TextSurf202, TextRect202 = text_objects("Press [1] to quit the game      Press [2] to restart the game", canteur20)
+    TextRect202.center = (300,600)
     gameDisplay.blit(TextSurf201, TextRect201)
     gameDisplay.blit(TextSurf202, TextRect202)
     #Display and make all other texts on this screen
 
     for event in pygame.event.get():
         if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_x:
+            if event.key == pygame.K_1:
                 pygame.quit()
                 quit()
             #If [X] is pressed, quit the game
+
+            if event.key == pygame.K_2:
+                main()
 
     pygame.display.update()
     #Update the screen to let it take effect
@@ -448,7 +460,14 @@ def main():
     clock = pygame.time.Clock()
     #Sets the clock speed of the game
 
+    t_m = 0
+    t_s0 = "0"
+    t_s = 0
+    SecondCounter = 1
+    #Initialises variables for clock
+
     GameExit = False
+    #Initialises main loop terminaition variable
     
     while not GameExit:
     #Event processing starts here
@@ -478,16 +497,16 @@ def main():
                     player2.changespeed(0,5)
                 #When a direction key is pressed let player2 to do according movements
 
-                if event.key == pygame.K_m:
+                if event.key == pygame.K_1:
                     start_menu()
                 #When M is pressed go back to main game menu
 
-                if event.key == pygame.K_v:
+                if event.key == pygame.K_2:
                     pygame.quit()
                     quit()
                 #When V is pressed quit the game
 
-                if event.key == pygame.K_h:
+                if event.key == pygame.K_3:
                     tutorial()
                 #When H is pressed go to tutorial
 
@@ -525,10 +544,7 @@ def main():
                 #When a direction key is released reset player2's speed
 
         for bullet in bullet_list:
-            if bullet.rect.x > -50 and bullet.rect.x < 900:
-                if bullet.rect.y > -150 and bullet.rect.y < 800:
-            #Only moves the bullet when it is on the screen
-                    bullet.move()
+            bullet.move()
         #Updates positions of all bullets on the screen
 
         #Event processing ends here
@@ -542,36 +558,49 @@ def main():
         bullet_list.draw(gameDisplay)
         current_map.wall_list.draw(gameDisplay)
         #Draws all sprites and walls
-
-        canteur20 = pygame.font.Font("Fonts/CENTAUR.TTF", 20)
+        
+        centaur15 = pygame.font.Font("Fonts/CENTAUR.TTF", 15)
+        centaur20 = pygame.font.Font("Fonts/CENTAUR.TTF", 20)
+        centaur35 = pygame.font.Font("Fonts/CENTAUR.TTF", 35)
         #Defines fonts used in main game loop
 
-        TextSurf5, TextRect5 = text_objects("Press [M] to go to game menu    Press [V] to quit the game    Press [H] for tutorial", canteur20)
-        TextRect5.center = (220,680)
+        TextSurf5, TextRect5 = text_objects("Press [1] to go to game menu    Press [2] to quit the game    Press [3] for tutorial", centaur20)
+        TextRect5.center = (300,680)
         gameDisplay.blit(TextSurf5, TextRect5)
         #Displays text for going back to main menu or quit the game
 
-        TextSurf6, TextRect6 = text_objects("Player1 HP:" + str(player1.get_hp()) + "/" + str(player1.get_max_hp()), canteur20)
+        TextSurf6, TextRect6 = text_objects("Player1 HP:" + str(player1.get_hp()) + "/" + str(player1.get_max_hp()), centaur20)
         TextRect6.center = (85,625)
         gameDisplay.blit(TextSurf6, TextRect6)
         #Displays information of the hp remaining of player1
 
-        TextSurf7, TextRect7 = text_objects("Player1 MP:" + str(player1.get_mp()) + "/1000", canteur20)
+        TextSurf7, TextRect7 = text_objects("Player1 MP:" + str(player1.get_mp()) + "/1000", centaur20)
         TextRect7.center = (90,650)
         gameDisplay.blit(TextSurf7, TextRect7)
         #Displays information of the mp remaining of player2
 
-        TextSurf8, TextRect8 = text_objects("Player2 HP:" + str(player2.get_hp()) + "/" + str(player2.get_max_hp()), canteur20)
+        TextSurf8, TextRect8 = text_objects("Player2 HP:" + str(player2.get_hp()) + "/" + str(player2.get_max_hp()), centaur20)
         TextRect8.center = (715,625)
         gameDisplay.blit(TextSurf8, TextRect8)
         #Displays information of the hp remaining of player2
 
-        TextSurf9, TextRect9 = text_objects("Player2 MP:" + str(player2.get_mp()) + "/1000", canteur20)
+        TextSurf9, TextRect9 = text_objects("Player2 MP:" + str(player2.get_mp()) + "/1000", centaur20)
         TextRect9.center = (705,650)
         gameDisplay.blit(TextSurf9, TextRect9)
         #Displays information of the mp remaining of player2
 
+        TextSurf10, TextRect10 = text_objects("Game Time", centaur15)
+        TextRect10.center = (400,620)
+        TextSurf11, TextRect11 = text_objects(str(t_m) + ":" + t_s0 + str(t_s), centaur35)
+        TextRect11.center = (400,640)
+        gameDisplay.blit(TextSurf10, TextRect10)
+        gameDisplay.blit(TextSurf11, TextRect11)
+        #Displays time information of the game
+
         #Additional drawing stops here
+
+        pygame.sprite.groupcollide(bullet_list,current_map.wall_list,True,False)
+        #If a bullet hit a wall, make the bullet dissappear
 
         player1.move(current_map.wall_list)
         #Updates the position of player1 in each tick
@@ -594,10 +623,31 @@ def main():
         if player1.get_hp() < 0:
             game_over(2)
             player1.hp_change(-10000)
-        if player2.get_hp() < 0:
+        elif player2.get_hp() < 0:
             game_over(1)
             player2.hp_change(-10000)
         #If any player died, terminate the game
+
+        #clock_update(t_m, t_s0, t_s, SecondCounter)
+        #Updates the clock
+
+        if SecondCounter == 30:
+            t_s = t_s + 1
+            SecondCounter = 0
+        else:
+            SecondCounter = SecondCounter + 1
+        #Increment second display when needed
+        
+        if t_s == 60:
+            t_m = t_m + 1
+            t_s = 0
+        #Increment minute display when needed
+
+        if t_s < 10:
+            t_s0 = "0"
+        else:
+            t_s0 = ""
+        #When seconds is only 1 digit add another 0
 
         pygame.display.update()
         #Updates the game window
